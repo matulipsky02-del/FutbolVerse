@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="FútbolVerse: ¿podés adivinar al futbolista con pistas?">
+  <title>FútbolVerse — Adiviná al jugador</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: #101e30;
+      --panel-2: #15263b;
+      --line: #263950;
+      --text: #f5f8fc;
+      --muted: #a9b8cb;
+      --lime: #b7ff45;
+      --lime-dark: #203616;
+      --red: #ff7777;
+      --radius: 20px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text);
+      background: radial-gradient(ellipse at 50% -20%, #193557 0, transparent 55%), var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible { outline: 3px solid var(--lime); outline-offset: 3px; }
+    .wrap { width: min(100% - 32px, 1050px); margin: 0 auto; }
+    header { padding: 22px 0; border-bottom: 1px solid #ffffff12; }
+    .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 950; letter-spacing: .04em; }
+    .brand-icon { width: 42px; height: 42px; display: grid; place-items: center; background: var(--lime); color: var(--bg); border-radius: 13px; font-size: 23px; }
+    .brand small { display: block; color: var(--lime); font-size: 10px; letter-spacing: .19em; margin-top: 2px; }
+    .nav-tag { color: var(--muted); font-size: 13px; border: 1px solid var(--line); padding: 9px 12px; border-radius: 999px; }
+    main { padding: 34px 0 54px; }
+    .hero { text-align: center; padding: 22px 0 28px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--lime); text-transform: uppercase; font-size: 11px; font-weight: 900; letter-spacing: .17em; }
+    h1 { font-size: clamp(34px, 6vw, 62px); line-height: 1.02; letter-spacing: -.055em; margin: 14px 0; }
+    h1 span { color: var(--lime); }
+    .hero p { color: var(--muted); max-width: 540px; margin: 0 auto; line-height: 1.65; font-size: 15px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px auto 0; max-width: 560px; }
+    .stat { background: #ffffff08; border: 1px solid var(--line); border-radius: 15px; padding: 13px 8px; }
+    .stat strong { display: block; font-size: 23px; }
+    .stat span { color: var(--muted); font-size: 11px; }
+    .game-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr); gap: 18px; align-items: start; }
+    .card { background: linear-gradient(160deg, #13243a, #0e1a2a); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: 0 18px 60px #00000020; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+    .card-top h2 { font-size: 14px; margin: 0; }
+    .pill { border-radius: 999px; padding: 7px 10px; background: #b7ff4518; color: var(--lime); font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .player-stage { position: relative; min-height: 240px; display: grid; place-items: center; padding: 25px; overflow: hidden; background: radial-gradient(ellipse at 50% 80%, #21462c 0, #132c2c 35%, #101e30 72%); }
+    .player-stage:before { content: ""; position: absolute; inset: 0; opacity: .25; background: repeating-linear-gradient(90deg, transparent 0 49px, #b7ff4518 50px 51px); }
+    .player-stage:after { content: ""; position: absolute; width: 190px; height: 190px; border: 1px solid #b7ff4530; border-radius: 50%; }
+    .mystery { position: relative; z-index: 1; width: 132px; height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; filter: drop-shadow(0 12px 16px #0007); }
+    .silhouette-head { width: 51px; height: 51px; border-radius: 50%; background: #050a10; border: 2px solid #b7ff4545; }
+    .silhouette-body { width: 110px; height: 87px; margin-top: 7px; border-radius: 48px 48px 12px 12px; background: #050a10; border: 2px solid #b7ff4545; }
+    .mystery-mark { position: absolute; z-index: 2; color: var(--lime); font-weight: 1000; font-size: 58px; text-shadow: 0 0 25px #b7ff4570; }
+    .stage-label { position: absolute; bottom: 15px; z-index: 2; color: #c6d7cb; font-size: 10px; font-weight: 800; letter-spacing: .18em; }
+    .clues { padding: 20px; }
+    .clues h3 { margin: 0 0 12px; font-size: 13px; }
+    .clue-list { display: grid; gap: 9px; }
+    .clue { display: flex; align-items: flex-start; gap: 11px; padding: 12px; background: #ffffff06; border: 1px solid #ffffff0e; border-radius: 12px; }
+    .clue-num { flex: 0 0 26px; height: 26px; display: grid; place-items: center; background: var(--panel-2); color: var(--lime); border-radius: 8px; font-size: 11px; font-weight: 900; }
+    .clue p { margin: 2px 0 0; color: #dce6f2; font-size: 13px; line-height: 1.45; }
+    .clue.locked p { color: #8090a4; }
+    .answer-area { padding: 0 20px 20px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .input-row { display: flex; gap: 8px; }
+    input { width: 100%; min-width: 0; background: #081321; border: 1px solid #31445c; border-radius: 12px; padding: 14px; color: var(--text); }
+    .btn { border: 0; border-radius: 12px; padding: 13px 16px; font-weight: 900; transition: transform .15s, filter .15s; }
+    .btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .btn-primary { background: var(--lime); color: #0b1607; }
+    .btn-secondary { background: #21344b; color: var(--text); border: 1px solid #354a62; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .feedback { min-height: 24px; margin: 11px 0 0; font-size: 13px; line-height: 1.5; }
+    .feedback.good { color: var(--lime); }
+    .feedback.bad { color: var(--red); }
+    .side { display: grid; gap: 18px; }
+    .side-body { padding: 19px; }
+    .side-body h2 { margin: 0 0 8px; font-size: 16px; }
+    .side-body p { color: var(--muted); margin: 0; font-size: 13px; line-height: 1.6; }
+    .how-list { display: grid; gap: 13px; margin-top: 18px; }
+    .how { display: flex; gap: 11px; align-items: flex-start; }
+    .how-icon { display: grid; place-items: center; flex: 0 0 33px; height: 33px; border-radius: 10px; background: #b7ff4517; color: var(--lime); font-weight: 900; }
+    .how strong { display: block; font-size: 12px; margin: 1px 0 4px; }
+    .how span { display: block; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .daily-box { background: linear-gradient(135deg, #243c20, #14271f); border: 1px solid #b7ff453d; border-radius: var(--radius); padding: 19px; }
+    .daily-box .mini { color: var(--lime); font-size: 10px; letter-spacing: .16em; font-weight: 900; }
+    .daily-box h2 { margin: 8px 0; font-size: 18px; }
+    .daily-box p { margin: 0; color: #d0dec9; font-size: 12px; line-height: 1.5; }
+    .daily-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 16px; }
+    .daily-row strong { font-size: 13px; }
+    .small-muted { font-size: 10px; color: var(--muted); }
+    .result { display: none; padding: 17px 20px 20px; border-top: 1px solid var(--line); background: #b7ff450b; }
+    .result.show { display: block; }
+    .result h3 { margin: 0 0 5px; color: var(--lime); font-size: 15px; }
+    .result p { margin: 0; color: #d3dfeb; font-size: 13px; line-height: 1.5; }
+    footer { border-top: 1px solid #ffffff12; padding: 20px 0 28px; color: var(--muted); font-size: 11px; }
+    .footer-inner { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .toast { position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--lime); color: #08130a; padding: 12px 17px; border-radius: 12px; font-weight: 900; font-size: 13px; transition: .2s; z-index: 5; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    @media (max-width: 760px) {
+      .game-layout { grid-template-columns: 1fr; }
+      .side { grid-template-columns: 1fr 1fr; }
+      .player-stage { min-height: 215px; }
+    }
+    @media (max-width: 500px) {
+      .wrap { width: min(100% - 22px, 1050px); }
+      header { padding: 15px 0; }
+      .nav-tag { font-size: 10px; padding: 8px 9px; }
+      .brand-icon { width: 37px; height: 37px; }
+      main { padding-top: 22px; }
+      .hero { padding-top: 14px; }
+      .hero p { font-size: 13px; }
+      .stats { gap: 7px; }
+      .stat strong { font-size: 20px; }
+      .stat span { font-size: 10px; }
+      .side { grid-template-columns: 1fr; }
+      .card-top, .clues { padding: 16px; }
+      .answer-area { padding: 0 16px 16px; }
+      .input-row { flex-direction: column; }
+      .input-row .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">⚽</div>
+        <div>FÚTBOLVERSE<small>PLAY · COMPETE · WIN</small></div>
+      </div>
+      <div class="nav-tag">⚡ DESAFÍO DE FÚTBOL</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow">✦ EL RETO DEL FUTBOLERO ✦</div>
+      <h1>¿QUIÉN ES EL <span>JUGADOR?</span></h1>
+      <p>Leé las pistas, escribí tu respuesta y demostrá que sabés de fútbol. Cuantas menos pistas uses, más puntos ganás.</p>
+      <div class="stats" aria-label="Tus estadísticas">
+        <div class="stat"><strong id="score">0</strong><span>PUNTOS DE HOY</span></div>
+        <div class="stat"><strong id="streak">0</strong><span>RACHA</span></div>
+        <div class="stat"><strong id="round">1/5</strong><span>RONDA</span></div>
+      </div>
+    </section>
+
+    <section class="game-layout" aria-label="Juego principal">
+      <article class="card">
+        <div class="card-top">
+          <h2>🏟️ ADIVINÁ AL JUGADOR</h2>
+          <span class="pill" id="difficulty">DIFICULTAD: MEDIA</span>
+        </div>
+        <div class="player-stage" aria-label="Silueta misteriosa de futbolista">
+          <div class="mystery" aria-hidden="true">
+            <div class="silhouette-head"></div>
+            <div class="silhouette-body"></div>
+          </div>
+          <div class="mystery-mark" aria-hidden="true">?</div>
+          <div class="stage-label">IDENTIDAD OCULTA</div>
+        </div>
+        <div class="clues">
+          <h3>PISTAS DESBLOQUEADAS</h3>
+          <div class="clue-list" id="clueList"></div>
+        </div>
+        <div class="answer-area">
+          <label for="answer">¿Quién pensás que es?</label>
+          <div class="input-row">
+            <input id="answer" type="text" autocomplete="off" placeholder="Escribí el nombre..." maxlength="70">
+            <button class="btn btn-primary" id="guessBtn">RESPONDER</button>
+          </div>
+          <p class="feedback" id="feedback" role="status" aria-live="polite">¡Tenés 3 intentos! Cada pista extra resta puntos.</p>
+          <div class="input-row" style="margin-top:10px">
+            <button class="btn btn-secondary" id="hintBtn">💡 Otra pista (−5 pts)</button>
+            <button class="btn btn-secondary" id="skipBtn">Revelar jugador</button>
+          </div>
+        </div>
+        <div class="result" id="result">
+          <h3 id="resultTitle">¡Correcto!</h3>
+          <p id="resultText"></p>
+          <button class="btn btn-primary" id="nextBtn" style="margin-top:14px">SIGUIENTE JUGADOR →</button>
+        </div>
+      </article>
+
+      <aside class="side">
+        <article class="card">
+          <div class="card-top"><h2>📋 CÓMO JUGAR</h2><span class="pill">3 INTENTOS</span></div>
+          <div class="side-body">
+            <p>Usá las pistas para descubrir al futbolista misterioso.</p>
+            <div class="how-list">
+              <div class="how"><div class="how-icon">1</div><div><strong>Leé las pistas</strong><span>País, posición, clubes y logros.</span></div></div>
+              <div class="how"><div class="how-icon">2</div><div><strong>Escribí tu respuesta</strong><span>Probá el nombre y apellido.</span></div></div>
+              <div class="how"><div class="how-icon">3</div><div><strong>Sumá puntos</strong><span>Acertá con la menor cantidad de pistas.</span></div></div>
+            </div>
+          </div>
+        </article>
+        <article class="daily-box">
+          <div class="mini">⚡ TU MISIÓN</div>
+          <h2>Convertite en leyenda</h2>
+          <p>Completá las cinco rondas y superá tu mejor puntuación. Tu progreso se guarda en este dispositivo.</p>
+          <div class="daily-row"><strong>Meta: 100 puntos</strong><span class="small-muted">¡A jugar!</span></div>
+        </article>
+      </aside>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>© <span id="year"></span> FútbolVerse · Proyecto fan, sin afiliación oficial.</span>
+      <span>Hecho para disfrutar del fútbol ⚽</span>
+    </div>
+  </footer>
+  <div class="toast" id="toast" role="status">¡Puntos guardados!</div>
+
+  <script>
+    // Podés agregar jugadores copiando el formato de los objetos de esta lista.
+    const players = [
+      { name: "Lionel Messi", aliases: ["messi", "lionel messi", "leo messi"], country: "Argentina 🇦🇷", position: "Delantero / creador de juego", clubs: "Barcelona, PSG e Inter Miami", fact: "Ganó el Mundial de 2022 con Argentina.", difficulty: "FÁCIL" },
+      { name: "Cristiano Ronaldo", aliases: ["cristiano", "cristiano ronaldo", "ronaldo"], country: "Portugal 🇵🇹", position: "Delantero", clubs: "Manchester United, Real Madrid, Juventus y Al-Nassr", fact: "Es uno de los máximos goleadores de la historia del fútbol.", difficulty: "FÁCIL" },
+      { name: "Kylian Mbappé", aliases: ["mbappe", "kylian mbappe", "kylian"], country: "Francia 🇫🇷", position: "Delantero", clubs: "Monaco, PSG y Real Madrid", fact: "Ganó el Mundial de 2018 con Francia.", difficulty: "MEDIA" },
+      { name: "Neymar Jr.", aliases: ["neymar", "neymar jr", "neymar junior"], country: "Brasil 🇧🇷", position: "Delantero / extremo", clubs: "Barcelona, PSG y Santos", fact: "Formó parte del tridente MSN junto a Messi y Suárez.", difficulty: "MEDIA" },
+      { name: "Luka Modrić", aliases: ["modric", "luka modric"], country: "Croacia 🇭🇷", position: "Mediocampista", clubs: "Tottenham y Real Madrid, entre otros", fact: "Ganó el Balón de Oro en 2018.", difficulty: "MEDIA" },
+      { name: "Erling Haaland", aliases: ["haaland", "erling haaland"], country: "Noruega 🇳🇴", position: "Delantero centro", clubs: "Borussia Dortmund y Manchester City", fact: "Es conocido por su potencia y capacidad goleadora.", difficulty: "MEDIA" },
+      { name: "Diego Maradona", aliases: ["maradona", "diego maradona", "el diego"], country: "Argentina 🇦🇷", position: "Mediapunta", clubs: "Napoli, Barcelona y Boca Juniors, entre otros", fact: "Fue capitán de Argentina campeona del mundo en 1986.", difficulty: "FÁCIL" },
+      { name: "Zinedine Zidane", aliases: ["zidane", "zinedine zidane"], country: "Francia 🇫🇷", position: "Mediocampista ofensivo", clubs: "Juventus y Real Madrid", fact: "Ganó el Mundial de 1998 como jugador.", difficulty: "MEDIA" },
+      { name: "Ronaldinho", aliases: ["ronaldinho", "ronaldinho gaucho", "ronaldinho gaúcho"], country: "Brasil 🇧🇷", position: "Mediapunta / extremo", clubs: "Barcelona, Milan y PSG, entre otros", fact: "Ganó el Balón de Oro en 2005.", difficulty: "MEDIA" },
+      { name: "Sergio Agüero", aliases: ["aguero", "sergio aguero", "kun aguero", "kun agüero"], country: "Argentina 🇦🇷", position: "Delantero centro", clubs: "Atlético de Madrid, Manchester City y Barcelona", fact: "Su gol decisivo de 2012 le dio una Premier League histórica al City.", difficulty: "MEDIA" }
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const normalize = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+    const todayKey = new Date().toISOString().slice(0, 10);
+    let score = 0, streak = 0, round = 0, current = null, clueIndex = 0, attempts = 0, finished = false;
+    let used = [];
+    function readBest() {
+      try { return Number(window.localStorage.getItem("fv-best") || 0); }
+      catch (_) { return 0; }
+    }
+    function saveBest(value) {
+      try { window.localStorage.setItem("fv-best", String(value)); }
+      catch (_) { /* El juego sigue funcionando aunque el navegador no permita guardar. */ }
+    }
+    let best = readBest();
+    const clueTemplates = [
+      p => `Su país es ${p.country}.`,
+      p => `Juega o jugaba como ${p.position.toLowerCase()}.`,
+      p => `Entre sus equipos conocidos están: ${p.clubs}.`,
+      p => p.fact
+    ];
+
+    function shufflePlayers() {
+      const copy = [...players];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy.slice(0, 5);
+    }
+    function startGame() {
+      score = 0; streak = 0; round = 0; used = shufflePlayers();
+      updateStats();
+      loadRound();
+    }
+    function loadRound() {
+      if (round >= used.length) {
+        endGame();
+        return;
+      }
+      current = used[round]; clueIndex = 1; attempts = 0; finished = false;
+      $("difficulty").textContent = "DIFICULTAD: " + current.difficulty;
+      $("answer").value = "";
+      $("answer").disabled = false;
+      $("guessBtn").disabled = false;
+      $("hintBtn").disabled = false;
+      $("skipBtn").disabled = false;
+      $("result").classList.remove("show");
+      $("feedback").className = "feedback";
+      $("feedback").textContent = "¡Tenés 3 intentos! Cada pista extra resta puntos.";
+      renderClues();
+      updateStats();
+      $("answer").focus({ preventScroll: true });
+    }
+    function renderClues() {
+      const list = $("clueList");
+      list.innerHTML = "";
+      for (let i = 0; i < clueTemplates.length; i++) {
+        const item = document.createElement("div");
+        item.className = "clue" + (i >= clueIndex ? " locked" : "");
+        const number = document.createElement("div");
+        number.className = "clue-num";
+        number.textContent = i < clueIndex ? String(i + 1).padStart(2, "0") : "🔒";
+        const text = document.createElement("p");
+        text.textContent = i < clueIndex ? clueTemplates[i](current) : "Pista bloqueada: pedí otra pista para descubrirla.";
+        item.append(number, text);
+        list.appendChild(item);
+      }
+    }
+    function updateStats() {
+      $("score").textContent = score;
+      $("streak").textContent = streak;
+      $("round").textContent = `${Math.min(round + 1, 5)}/5`;
+    }
+    function setFeedback(message, type = "") {
+      $("feedback").textContent = message;
+      $("feedback").className = "feedback" + (type ? " " + type : "");
+    }
+    function lockRound() {
+      finished = true;
+      $("answer").disabled = true;
+      $("guessBtn").disabled = true;
+      $("hintBtn").disabled = true;
+      $("skipBtn").disabled = true;
+    }
+    function reveal(title, message) {
+      lockRound();
+      $("resultTitle").textContent = title;
+      $("resultText").textContent = message;
+      $("result").classList.add("show");
+      $("nextBtn").textContent = round === used.length - 1 ? "VER RESULTADO FINAL →" : "SIGUIENTE JUGADOR →";
+      $("nextBtn").focus({ preventScroll: true });
+    }
+    function guess() {
+      if (finished) return;
+      const value = normalize($("answer").value);
+      if (!value) { setFeedback("Escribí un nombre antes de responder.", "bad"); return; }
+      attempts++;
+      const answers = [current.name, ...current.aliases].map(normalize);
+      if (answers.includes(value)) {
+        const earned = Math.max(5, 20 - (clueIndex - 1) * 5 - (attempts - 1) * 3);
+        score += earned; streak++;
+        updateStats();
+        setFeedback(`¡Correcto! Sumaste ${earned} puntos.`, "good");
+        reveal("⚽ ¡LO ADIVINASTE!", `${current.name}. ${current.fact} Ganaste ${earned} puntos.`);
+      } else if (attempts >= 3) {
+        streak = 0; updateStats();
+        setFeedback("Se terminaron los intentos. ¡A por el siguiente!", "bad");
+        reveal(`Era ${current.name}`, current.fact);
+      } else {
+        setFeedback(`No es correcto. Te quedan ${3 - attempts} intento(s). ¡Probá otra vez!`, "bad");
+        $("answer").select();
+      }
+    }
+    function hint() {
+      if (finished) return;
+      if (clueIndex >= clueTemplates.length) {
+        setFeedback("Ya desbloqueaste todas las pistas.", "bad");
+        return;
+      }
+      score = Math.max(0, score - 5);
+      clueIndex++;
+      renderClues(); updateStats();
+      setFeedback("Nueva pista desbloqueada. ¡Pensalo bien!");
+      if (clueIndex >= clueTemplates.length) $("hintBtn").disabled = true;
+    }
+    function skip() {
+      if (finished) return;
+      streak = 0; updateStats();
+      reveal(`Era ${current.name}`, current.fact);
+    }
+    function endGame() {
+      $("difficulty").textContent = "DESAFÍO COMPLETADO";
+      $("clueList").innerHTML = "";
+      const message = `Terminaste las cinco rondas y conseguiste ${score} puntos.`;
+      $("feedback").textContent = message;
+      $("resultTitle").textContent = score >= 70 ? "🏆 ¡PARTIDAZO!" : "⚽ ¡BUEN DESAFÍO!";
+      $("resultText").textContent = `${message} Tu mejor puntuación anterior era ${best} puntos.`;
+      $("result").classList.add("show");
+      $("nextBtn").textContent = "JUGAR DE NUEVO ↻";
+      $("answer").disabled = true;
+      $("guessBtn").disabled = true;
+      $("hintBtn").disabled = true;
+      $("skipBtn").disabled = true;
+      $("round").textContent = "5/5";
+      if (score > best) {
+        best = score;
+        saveBest(best);
+        showToast("¡Nuevo récord personal!");
+      }
+    }
+    function nextRound() {
+      if (round >= used.length - 1) {
+        startGame();
+        return;
+      }
+      round++;
+      loadRound();
+    }
+    function showToast(text) {
+      $("toast").textContent = text;
+      $("toast").classList.add("show");
+      setTimeout(() => $("toast").classList.remove("show"), 2200);
+    }
+
+    $("guessBtn").addEventListener("click", guess);
+    $("answer").addEventListener("keydown", e => { if (e.key === "Enter") guess(); });
+    $("hintBtn").addEventListener("click", hint);
+    $("skipBtn").addEventListener("click", skip);
+    $("nextBtn").addEventListener("click", nextRound);
+    $("year").textContent = new Date().getFullYear();
+    window.addEventListener("error", () => {
+      const feedback = document.getElementById("feedback");
+      if (feedback) {
+        feedback.textContent = "Hubo un error al ejecutar el juego. Probá abrir la página publicada en un navegador como Safari o Chrome.";
+        feedback.className = "feedback bad";
+      }
+    });
+    startGame();
+  </script>
+</body>
+</html>
